@@ -15,18 +15,6 @@ enum layers {
     _ADJUST,
 };
 
-
-// MOD KEYS
-#define MOUSE TG(_MOUSE)
-#define MO_A GUI_T(KC_A)
-#define MO_S ALT_T(KC_S)
-#define MO_D CTL_T(KC_D)
-#define MO_F SFT_T(KC_F)
-#define MO_J RSFT_T(KC_J)
-#define MO_K RCTL_T(KC_K)
-#define MO_L RALT_T(KC_L)
-#define MO_ODIA RGUI_T(DE_ODIA)
-
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 /* ALPHA
