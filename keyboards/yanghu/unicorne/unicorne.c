@@ -14,7 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "unicorne.h"
-
+#include "i2c_master.h"
 
 // Custom i2c init to enable internal pull up resistor for i2c.
 void i2c_init(void) {
@@ -23,46 +23,15 @@ void i2c_init(void) {
         is_initialised = true;
 
         // Try releasing special pins for a short time
-        palSetPadMode(I2C1_SCL_BANK, I2C1_SCL, PAL_MODE_INPUT);
-        palSetPadMode(I2C1_SDA_BANK, I2C1_SDA, PAL_MODE_INPUT);
+        palSetLineMode(I2C1_SCL_PIN, PAL_MODE_INPUT);
+        palSetLineMode(I2C1_SDA_PIN, PAL_MODE_INPUT);
 
         chThdSleepMilliseconds(10);
         // Use internal pull up since we do not have pull up on i2c pins in v1 design.
-        palSetPadMode(I2C1_SCL_BANK, I2C1_SCL, PAL_MODE_ALTERNATE(I2C1_SCL_PAL_MODE) | PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_PUPDR_PULLUP);
-        palSetPadMode(I2C1_SDA_BANK, I2C1_SDA, PAL_MODE_ALTERNATE(I2C1_SDA_PAL_MODE) | PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_PUPDR_PULLUP);
+        palSetLineMode(I2C1_SCL_PIN, PAL_MODE_ALTERNATE(I2C1_SCL_PAL_MODE) | PAL_OUTPUT_TYPE_OPENDRAIN | PAL_STM32_PUPDR_PULLUP);
+        palSetLineMode(I2C1_SDA_PIN, PAL_MODE_ALTERNATE(I2C1_SDA_PAL_MODE) | PAL_OUTPUT_TYPE_OPENDRAIN | PAL_STM32_PUPDR_PULLUP);
     }
 }
-
-// LED matrix
-// physical location
-// 2      3   4       5
-//
-// 1                  6
-//        0   7
-#ifdef RGB_MATRIX_ENABLE
-// clang-format off
-led_config_t g_led_config = {{
-    // Key Matrix to LED Index
-    // Since we only have 8 LEDs, map the keys near them to the same LED.
-    {2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5},
-    {2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5},
-    {1, 1, 1, 0, 0, 0, 7, 7, 7, 6, 6, 6},
-    {NO_LED, NO_LED, NO_LED, 0, 0, 0, 7, 7, 7, NO_LED, NO_LED, NO_LED},
-}, {// LED Index to Physical Position
-  {94, 60},
-  {18, 44},
-  {8, 10},
-  {94, 10},
-  {130,10},
-  {216, 10},
-  {208, 44},
-  {130, 60}
-}, {// LED Index to Flag
-  LED_FLAG_ALL, LED_FLAG_ALL, LED_FLAG_ALL, LED_FLAG_ALL, LED_FLAG_ALL, 
-  LED_FLAG_ALL, LED_FLAG_ALL, LED_FLAG_ALL
-}};
-// clang-format on
-#endif
 
 #ifdef OLED_ENABLE
 // OLED shared code
@@ -138,11 +107,13 @@ void set_keylog(uint16_t keycode, keyrecord_t *record) {
 __attribute__((weak)) void oled_render_keylog(void) { oled_write(keylog_str, false); }
 
 // Keymaps can override this function
-__attribute__((weak)) void oled_task_user(void) {
+__attribute__((weak)) bool oled_task_kb(void) {
+    if (!oled_task_user()) { return false; }
     /* oled_render_keylog(); */
     oled_render_layer();
     oled_render_mods();
     led_t led_state = host_keyboard_led_state();
     oled_render_capslock(led_state.caps_lock);
+    return true;
 }
 #endif
